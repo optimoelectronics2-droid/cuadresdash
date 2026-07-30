@@ -51,6 +51,23 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     } catch (cause: any) {
       if (cause?.name === "AbortError" || !mountedRef.current) return;
       setIsLive(false); setConfigError(Boolean(cause?.configError));
+      // A Netlify deploy leaves behind a complete static snapshot. Use it only for
+      // transient API/Drive outages; credential errors must remain visible.
+      if (!cause?.configError) {
+        try {
+          const fallback = await fetch(`/data.json?t=${Date.now()}`, { cache: "no-store", signal: controller.signal });
+          if (fallback.ok) {
+            const snapshot = await fallback.json();
+            if (snapshot?.transacciones) {
+              await applyData(snapshot, snapshot.ultimaActualizacion);
+              setError("Mostrando la última copia publicada; se actualizará automáticamente al reconectar.");
+              return;
+            }
+          }
+        } catch (fallbackCause: any) {
+          if (fallbackCause?.name === "AbortError") return;
+        }
+      }
       const cached = await getCachedDashboardData();
       if (cached) { await applyData(cached.data, new Date(cached.timestamp).toISOString()); setError("Mostrando la última copia local; se actualizará al reconectar."); }
       else if (!dataRef.current) setError(cause?.message || "No se pudo conectar y no hay datos locales.");
