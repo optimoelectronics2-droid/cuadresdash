@@ -36,11 +36,15 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     const controller = new AbortController(); controllerRef.current = controller;
     setIsRefreshing(true);
     try {
-      const response = await fetch(force ? "/api/data?refresh=1" : "/api/data", { cache: "no-store", signal: controller.signal });
+      // Fetch static data.json (for Netlify/serverless) with cache bust on force
+      const url = force
+        ? `/data.json?t=${Date.now()}`
+        : `/data.json`;
+      const response = await fetch(url, { cache: "no-store", signal: controller.signal });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const payload = await response.json();
-      if (!response.ok || !payload.success) throw Object.assign(new Error(payload.error || "Error al obtener datos"), { configError: payload.configError });
-      await applyData(payload.data, payload.timestamp); setIsLive(true);
-      channelRef.current?.postMessage({ type: "data", data: payload.data, timestamp: payload.timestamp });
+      // Payload is the dashboard data directly (not wrapped in {success, data})
+      await applyData(payload, payload.ultimaActualizacion); setIsLive(true);
     } catch (cause: any) {
       if (cause?.name === "AbortError" || !mountedRef.current) return;
       setIsLive(false); setConfigError(Boolean(cause?.configError));
@@ -80,14 +84,10 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       }).catch(() => {});
     }
     void (async () => { const cached = await getCachedDashboardData(); if (cached && mountedRef.current) await applyData(cached.data, new Date(cached.timestamp).toISOString()); await refresh(); })();
-    const events = new EventSource("/api/events");
-    events.onopen = () => setIsLive(true);
-    events.onerror = () => setIsLive(false);
-    events.addEventListener("data-updated", () => void refresh(true));
-    const pollTimer = setInterval(() => void refresh(false), 5000);
+    const pollTimer = setInterval(() => void refresh(false), 30000);
     const onVisible = () => { if (document.visibilityState === "visible") refresh(false); };
     document.addEventListener("visibilitychange", onVisible);
-    return () => { mountedRef.current = false; controllerRef.current?.abort(); clearInterval(pollTimer); events.close(); document.removeEventListener("visibilitychange", onVisible); channel?.removeEventListener("message", onMessage); channel?.close(); channelRef.current = null; };
+    return () => { mountedRef.current = false; controllerRef.current?.abort(); clearInterval(pollTimer); document.removeEventListener("visibilitychange", onVisible); channel?.removeEventListener("message", onMessage); channel?.close(); channelRef.current = null; };
   }, [applyData, refresh]);
 
   const getFilteredData = useCallback((filter: DateFilter) => data ? filterTransacciones(data.transacciones, filter) : [], [data]);
