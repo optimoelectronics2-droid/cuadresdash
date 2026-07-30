@@ -1,0 +1,8 @@
+node_modules/
+.next/
+*.log
+.env.local
+.env
+server-err.txt
+server-out.txt
+server-log.txt
