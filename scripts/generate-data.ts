@@ -1,22 +1,5 @@
-import { writeFileSync, readFileSync } from "node:fs";
+import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-
-// Load .env.local manually since tsx doesn't auto-load it
-function loadEnv(filePath: string) {
-  try {
-    const content = readFileSync(filePath, "utf-8");
-    for (const line of content.split(/\r?\n/)) {
-      const eqIdx = line.indexOf("=");
-      if (eqIdx > 0 && !line.startsWith("#")) {
-        const key = line.substring(0, eqIdx).trim();
-        const val = line.substring(eqIdx + 1).trim();
-        if (!process.env[key]) process.env[key] = val;
-      }
-    }
-  } catch {}
-}
-loadEnv(resolve(".env.local"));
-loadEnv(resolve(".env"));
 
 async function main() {
   const { buildCategorias, buildResumen, parseExcelData } = await import("../src/lib/data-processor");
@@ -51,7 +34,7 @@ async function main() {
       tipo: f.name.toLowerCase().includes("completo") ? "mensual" as const : "semanal" as const,
       anio: Number(String(f.name.match(/(\d{4})/)?.[1]) || new Date().getFullYear()),
       mes: 0,
-      semana: f.name.match(/Semana_?(\d+)/i)?.[1] ? Number(String(f.name.match(/Semana_?(\d+)/i)[1])) : undefined,
+      semana: f.name.match(/Semana_?(\d+)/i)?.[1] ? Number(String(f.name.match(/Semana_?(\d+)/i)![1])) : undefined,
       tamano: f.size ?? 0,
       modificado: f.modifiedTime,
     }));

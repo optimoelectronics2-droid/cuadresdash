@@ -61,13 +61,14 @@ npm run dev
 # La app corre en http://localhost:3000
 ```
 
-## Despliegue en Producción (Vercel)
+## Despliegue en Producción (Netlify)
 
 1. Sube el proyecto a GitHub
-2. Ve a [vercel.com](https://vercel.com/) e importa el repositorio
-3. En **Variables de Entorno**, agrega:
-   - `GOOGLE_SERVICE_ACCOUNT` = el JSON completo de la cuenta de servicio
-4. Despliega — la URL que obtengas será tu app instalable
+2. Ve a [netlify.com](https://www.netlify.com/) e importa el repositorio.
+3. En **Environment variables**, agrega `GOOGLE_SERVICE_ACCOUNT` con el JSON completo de la cuenta de servicio y habilítala para **Builds** y **Functions**.
+4. Despliega. El dashboard consulta `/api/data` cada 30 segundos y obtiene los datos directamente de Drive. La instantánea `data.json` es solo un respaldo si Drive o la API tienen una interrupción temporal.
+
+Nunca subas el JSON de la cuenta de servicio, claves privadas ni archivos `.env.local` a GitHub. Guárdalos solamente como secretos de Netlify o en tu equipo.
 
 ## Instalar la App en el Teléfono
 

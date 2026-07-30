@@ -4,27 +4,3 @@
 
 [build.environment]
   NPM_FLAGS = "--legacy-peer-deps"
-
-[[redirects]]
-  from = "/_next/static/*"
-  to = "/_next/static/:splat"
-  status = 200
-
-[[redirects]]
-  from = "/data.json"
-  to = "/data.json"
-  status = 200
-
-[[headers]]
-  for = "/data.json"
-  [headers.values]
-    Cache-Control = "public, max-age=30"
-    Content-Type = "application/json"
-
-[[headers]]
-  for = "/*"
-  [headers.values]
-    Cache-Control = "public, max-age=3600"
-
-[template.environment]
-  GOOGLE_SERVICE_ACCOUNT = "REQUIRED"
