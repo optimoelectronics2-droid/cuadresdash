@@ -1,0 +1,1 @@
+CreateObject("WScript.Shell").Run "cmd.exe /c cd /d C:\Users\Brailin\Documents\Dashboard\control-tienda-dashboard && C:\Users\Brailin\Documents\Dashboard\cloudflared.exe tunnel --url http://localhost:3456 > tunnel-log.txt 2>&1", 0, False
