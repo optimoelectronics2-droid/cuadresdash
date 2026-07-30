@@ -6,3 +6,6 @@ node_modules/
 server-err.txt
 server-out.txt
 server-log.txt
+
+# Local Netlify folder
+.netlify
