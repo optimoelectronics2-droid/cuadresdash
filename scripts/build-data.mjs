@@ -2,7 +2,6 @@ import { execSync } from "node:child_process";
 import { writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 
-// Use tsx to run the TypeScript file that generates the data
 const script = resolve("scripts", "generate-data.ts");
 const outDir = resolve("public");
 if (!existsSync(outDir)) mkdirSync(outDir, { recursive: true });
@@ -11,9 +10,8 @@ console.log("[build-data] Generando data.json desde Google Drive...");
 try {
   execSync(`npx tsx "${script}"`, { stdio: "inherit", timeout: 120000 });
   console.log("[build-data] OK");
-} catch (err: any) {
+} catch (err) {
   console.error("[build-data] Error:", err.message);
-  // Create empty data as fallback
   const emptyData = {
     resumen: {
       diario: { fecha: "", label: "", dia: 0, entradas: 0, gastos: 0, balance: 0, transacciones: 0 },
@@ -27,5 +25,5 @@ try {
     archivos: [],
   };
   writeFileSync(resolve(outDir, "data.json"), JSON.stringify(emptyData), "utf-8");
-  console.log("[build-data] Data vacía generada como fallback");
+  console.log("[build-data] Data vacia generada como fallback");
 }
