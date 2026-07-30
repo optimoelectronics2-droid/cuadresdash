@@ -36,15 +36,18 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     const controller = new AbortController(); controllerRef.current = controller;
     setIsRefreshing(true);
     try {
-      // Fetch static data.json (for Netlify/serverless) with cache bust on force
-      const url = force
-        ? `/data.json?t=${Date.now()}`
-        : `/data.json`;
-      const response = await fetch(url, { cache: "no-store", signal: controller.signal });
+      // The API reads Drive at request time. data.json is only an offline/build fallback;
+      // it cannot change after a Netlify deploy.
+      const apiUrl = force ? `/api/data?t=${Date.now()}` : "/api/data";
+      const response = await fetch(apiUrl, { cache: "no-store", signal: controller.signal });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const payload = await response.json();
-      // Payload is the dashboard data directly (not wrapped in {success, data})
-      await applyData(payload, payload.ultimaActualizacion); setIsLive(true);
+      if (!payload?.success || !payload?.data) {
+        const error: Error & { configError?: boolean } = new Error(payload?.error || "La API no devolviÃ³ datos.");
+        error.configError = Boolean(payload?.configError);
+        throw error;
+      }
+      await applyData(payload.data, payload.timestamp || payload.data.ultimaActualizacion); setIsLive(true);
     } catch (cause: any) {
       if (cause?.name === "AbortError" || !mountedRef.current) return;
       setIsLive(false); setConfigError(Boolean(cause?.configError));
@@ -84,6 +87,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       }).catch(() => {});
     }
     void (async () => { const cached = await getCachedDashboardData(); if (cached && mountedRef.current) await applyData(cached.data, new Date(cached.timestamp).toISOString()); await refresh(); })();
+    // Netlify functions do not share an in-memory event bus between requests.
+    // Polling the API below is therefore the reliable production synchronization.
     const pollTimer = setInterval(() => void refresh(false), 30000);
     const onVisible = () => { if (document.visibilityState === "visible") refresh(false); };
     document.addEventListener("visibilitychange", onVisible);
