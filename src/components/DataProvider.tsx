@@ -23,6 +23,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const channelRef = useRef<BroadcastChannel | null>(null);
   const mountedRef = useRef(true);
   const dataRef = useRef<DashboardData | null>(null);
+  const failedSyncsRef = useRef(0);
+  const retryAfterRef = useRef(0);
 
   const applyData = useCallback(async (next: DashboardData, timestamp = next.ultimaActualizacion) => {
     if (!mountedRef.current) return;
@@ -32,6 +34,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const refresh = useCallback(async (force = false) => {
+    if (!force && Date.now() < retryAfterRef.current) return;
     controllerRef.current?.abort();
     const controller = new AbortController(); controllerRef.current = controller;
     setIsRefreshing(true);
@@ -48,9 +51,16 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         throw error;
       }
       await applyData(payload.data, payload.timestamp || payload.data.ultimaActualizacion); setIsLive(true);
+      failedSyncsRef.current = 0;
+      retryAfterRef.current = 0;
     } catch (cause: any) {
       if (cause?.name === "AbortError" || !mountedRef.current) return;
       setIsLive(false); setConfigError(Boolean(cause?.configError));
+      failedSyncsRef.current += 1;
+      const retryDelay = cause?.configError
+        ? 5 * 60_000
+        : Math.min(5 * 60_000, 30_000 * 2 ** Math.min(failedSyncsRef.current - 1, 3));
+      retryAfterRef.current = Date.now() + retryDelay;
       // A Netlify deploy leaves behind a complete static snapshot. It keeps the
       // dashboard usable during a Drive, API, or runtime-secret interruption.
       try {
