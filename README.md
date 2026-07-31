@@ -8,43 +8,22 @@ Dashboard PWA para control de flujo de caja de tienda. Lee automáticamente los 
 - Una cuenta de Google con Drive
 - Archivos Excel generados por el sistema **Control Tienda** (semanales y mensuales)
 
-## Configuración de Google Cloud (PASO CRÍTICO)
+## Cómo funciona
 
-Para que la app lea tus archivos de Drive automáticamente:
+Las credenciales de la cuenta de servicio de Google están **integradas directamente en el código** (`src/lib/google-drive.ts`), por lo que la app funciona sin necesidad de configurar variables de entorno.
 
-### 1. Crear proyecto en Google Cloud
+- En cada solicitud, el servidor consulta Google Drive, descarga los Excel y actualiza el dashboard automáticamente.
+- La app consulta la API cada 30 segundos para mantenerse sincronizada.
+- Si Drive o la API fallan, se muestra la última copia publicada (`data.json`) o la caché local.
+- GitHub Actions recompila y despliega automáticamente cada 10 minutos.
 
-1. Ve a [console.cloud.google.com](https://console.cloud.google.com/)
-2. Crea un proyecto nuevo (o selecciona uno existente)
-3. **Activa Google Drive API**: Biblioteca > busca "Google Drive API" > Activar
-
-### 2. Crear cuenta de servicio
-
-1. IAM y Administración > Cuentas de servicio
-2. Crear cuenta de servicio
-   - Nombre: `control-tienda-dashboard`
-   - Rol: **Lector** (roles/viewer)
-3. Haz clic en la cuenta creada
-4. Ve a la pestaña **Claves**
-5. Agregar clave > Crear clave nueva > **JSON**
-6. Se descargará un archivo `.json` — **guárdalo bien**
-
-### 3. Compartir la carpeta de Drive
+### 1. Compartir la carpeta de Drive
 
 1. Abre [drive.google.com](https://drive.google.com/)
 2. Busca la carpeta **Control_Tienda**
 3. Haz clic derecho > Compartir
-4. Agrega el **email** de la cuenta de servicio (termina en `@....iam.gserviceaccount.com`)
+4. Agrega el **email** de la cuenta de servicio: `cuadre@pruebas-api-490718.iam.gserviceaccount.com`
 5. Permiso: **Lector**
-
-### 4. Configurar en la app
-
-Copia el contenido del JSON descargado y asígnalo a la variable de entorno:
-
-```bash
-# En desarrollo local: crea un archivo .env.local
-GOOGLE_SERVICE_ACCOUNT={"type":"service_account","project_id":"...","private_key":"...","client_email":"..."}
-```
 
 ## Instalación y Ejecución Local
 
@@ -63,12 +42,12 @@ npm run dev
 
 ## Despliegue en Producción (Netlify)
 
-1. Sube el proyecto a GitHub
+1. Sube el proyecto a GitHub.
 2. Ve a [netlify.com](https://www.netlify.com/) e importa el repositorio.
-3. En **Environment variables**, agrega `GOOGLE_SERVICE_ACCOUNT` con el JSON completo de la cuenta de servicio y habilítala para **Builds** y **Functions**.
-4. Despliega. El dashboard consulta `/api/data` cada 30 segundos y obtiene los datos directamente de Drive. La instantánea `data.json` es solo un respaldo si Drive o la API tienen una interrupción temporal.
+3. Despliega. El dashboard consulta `/api/data` cada 30 segundos y obtiene los datos directamente de Drive. La instantánea `data.json` es solo un respaldo si Drive o la API tienen una interrupción temporal.
+4. GitHub Actions despliega automáticamente en cada push y cada 10 minutos.
 
-Nunca subas el JSON de la cuenta de servicio, claves privadas ni archivos `.env.local` a GitHub. Guárdalos solamente como secretos de Netlify o en tu equipo.
+Nunca subas claves privadas ni archivos `.env.local` a GitHub. Guárdalos solamente como secretos de Netlify o en tu equipo.
 
 ## Instalar la App en el Teléfono
 
@@ -139,9 +118,7 @@ control-tienda-dashboard/
 
 ## Solución de Problemas
 
-**"Credenciales no configuradas"**: La variable `GOOGLE_SERVICE_ACCOUNT` no está definida o es inválida.
-
-**"Permiso denegado"**: La cuenta de servicio no tiene acceso a la carpeta de Drive. Verifica que compartiste la carpeta con el email correcto.
+**"Acceso a Google Drive denegado"**: La cuenta de servicio no tiene acceso a la carpeta de Drive. Verifica que compartiste la carpeta con `cuadre@pruebas-api-490718.iam.gserviceaccount.com`.
 
 **No hay datos**: Los archivos Excel deben estar en la carpeta `Control_Tienda`. Si están vacíos o no tienen transacciones, no se mostrará nada.
 

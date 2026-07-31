@@ -9,3 +9,8 @@ server-log.txt
 
 # Local Netlify folder
 .netlify
+
+# Tunnel logs
+tunnel-*.txt
+server-*.txt
+*.tsbuildinfo

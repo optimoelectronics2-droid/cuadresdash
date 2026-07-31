@@ -1,4 +1,4 @@
-const CACHE_NAME = "control-tienda-v7";
+const CACHE_NAME = "control-tienda-v8";
 const STATIC_ASSETS = [
   "/manifest.json",
   "/icons/icon-192.png",
@@ -60,7 +60,8 @@ self.addEventListener("fetch", (event) => {
   if (request.mode === "navigate") {
     return;
   }
-  if (url.pathname.startsWith("/api/")) {
+  // Nunca cachear API ni datos dinamicos: siempre red fresca.
+  if (url.pathname.startsWith("/api/") || url.pathname === "/data.json") {
     return;
   }
   event.respondWith(

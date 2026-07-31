@@ -74,16 +74,14 @@ export default function HomePage() {
             <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
         </div>
-        <h2 className="text-lg font-bold text-gray-800 mb-2">Configuración pendiente</h2>
+        <h2 className="text-lg font-bold text-gray-800 mb-2">Acceso a Google Drive</h2>
         <p className="text-sm text-gray-600 mb-4">{error}</p>
         <div className="bg-blue-50 rounded-xl p-4 text-left text-xs text-gray-700 w-full max-w-sm">
-          <p className="font-bold mb-2">Para configurar:</p>
+          <p className="font-bold mb-2">Para solucionar:</p>
           <ol className="list-decimal list-inside space-y-1">
-            <li>Crea un proyecto en <span className="font-mono">console.cloud.google.com</span></li>
-            <li>Activa Google Drive API</li>
-            <li>Crea una cuenta de servicio y descarga el JSON</li>
-            <li>Comparte la carpeta de Drive con el email de la cuenta</li>
-            <li>Agrega el JSON como variable de entorno <span className="font-mono">GOOGLE_SERVICE_ACCOUNT</span></li>
+            <li>Comparte la carpeta de Drive con <span className="font-mono">cuadre@pruebas-api-490718.iam.gserviceaccount.com</span></li>
+            <li>Dale permisos de <span className="font-mono">Editor</span> o <span className="font-mono">Lector</span> a la carpeta</li>
+            <li>Verifica que los archivos Excel estén dentro de la carpeta</li>
           </ol>
         </div>
         <button onClick={() => void refresh(true)} className="mt-4 px-6 py-3 bg-primary text-white rounded-xl font-bold text-sm min-h-[44px]">Reintentar</button>

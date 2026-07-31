@@ -15,7 +15,7 @@ export async function GET() {
     return response;
   } catch (error: any) {
     const message = error?.message || "Error desconocido";
-    const configError = message.includes("GOOGLE_SERVICE_ACCOUNT") || /permission|not found/i.test(message);
+    const configError = /credenciales|invalid|permission|not found|JSON/i.test(message);
     return NextResponse.json({ success: false, error: configError ? "No se puede acceder a Google Drive. Revisa las credenciales y permisos." : message, configError }, { status: 500 });
   }
 }

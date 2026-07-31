@@ -4,3 +4,10 @@
 
 [build.environment]
   NPM_FLAGS = "--legacy-peer-deps"
+  NODE_VERSION = "20"
+
+# Permite que el service worker controle toda la app
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Service-Worker-Allowed = "/"

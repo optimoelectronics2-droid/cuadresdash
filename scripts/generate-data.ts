@@ -1,4 +1,4 @@
-import { writeFileSync } from "node:fs";
+import { writeFileSync, renameSync } from "node:fs";
 import { resolve } from "node:path";
 
 async function main() {
@@ -54,7 +54,9 @@ async function main() {
     };
 
     const outPath = resolve("public", "data.json");
-    writeFileSync(outPath, JSON.stringify(data), "utf-8");
+    const tmpPath = `${outPath}.tmp`;
+    writeFileSync(tmpPath, JSON.stringify(data), "utf-8");
+    renameSync(tmpPath, outPath);
     console.log(`[generate-data] OK: ${transacciones.length} tx → ${outPath}`);
   } else {
     const emptyData = {

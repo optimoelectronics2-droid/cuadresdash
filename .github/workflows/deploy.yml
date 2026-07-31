@@ -1,0 +1,55 @@
+name: Sync & Deploy
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-deploy
+  cancel-in-progress: false
+
+jobs:
+  auto-sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Regenerar data.json desde Google Drive
+        run: node scripts/build-data.mjs
+
+      - name: Commit y push si Drive cambio
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: |
+          git config user.name "auto-sync[bot]"
+          git config user.email "auto-sync[bot]@users.noreply.github.com"
+          git add public/data.json
+          if git diff --cached --quiet; then
+            echo "Sin cambios en Drive"
+          else
+            git commit -m "chore: auto-sync datos desde Google Drive"
+            git push
+          fi
+
+      - name: Build
+        run: npm run build
+
+      - name: Deploy directo a Netlify (si hay token configurado)
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        run: npx netlify-cli deploy --prod --dir=.next --message="Auto-deploy: ${{ github.sha }}"
+        continue-on-error: true
