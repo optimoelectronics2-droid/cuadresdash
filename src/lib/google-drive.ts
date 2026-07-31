@@ -14,12 +14,14 @@ function getCredentialsJson(): string {
   return Buffer.from(CREDENTIALS_B64, "base64").toString("utf-8");
 }
 
+export function createAuthWithScopes(scopes: string[]): any {
+  const creds = JSON.parse(getCredentialsJson());
+  return new google.auth.JWT({ email: creds.client_email, key: creds.private_key, scopes });
+}
+
 function getAuth() {
   if (authClient) return authClient;
-  let creds: any;
-  try { creds = JSON.parse(getCredentialsJson()); } catch { throw new Error("Las credenciales de Google son inválidas. Verifica el archivo."); }
-  if (!creds.client_email || !creds.private_key) throw new Error("Credenciales de Google incompletas");
-  authClient = new google.auth.JWT({ email: creds.client_email, key: creds.private_key, scopes: SCOPES });
+  authClient = createAuthWithScopes(SCOPES);
   return authClient;
 }
 

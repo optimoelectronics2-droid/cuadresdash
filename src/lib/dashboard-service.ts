@@ -4,6 +4,7 @@ import { getCachedData, getFetchPromise, setCachedData, setFetchPromise } from "
 import type { DashboardData, FileInfo, Transaccion } from "./types";
 import { generarComparaciones } from "./comparisons";
 import { sendPushNotification } from "./push";
+import { getSyncState, setSyncState } from "./sync-state";
 
 const EXCEL_FILE = /\.xlsx?$/i;
 const MAX_PARALLEL_DOWNLOADS = 4;
@@ -39,6 +40,29 @@ export async function refreshDashboardData(): Promise<DashboardData> {
     const transacciones: Transaccion[] = batches.flat().sort((a, b) => a.timestamp - b.timestamp);
     const data: DashboardData = { resumen: buildResumen(transacciones), transacciones, categorias: buildCategorias(transacciones), ultimaActualizacion: new Date().toISOString(), archivos };
     setCachedData(data, archivos.map((file) => ({ name: file.nombre, modified: file.modificado })));
+
+    // Notificar datos nuevos cuando cambian los archivos en Drive (estado persistente: funciona en serverless)
+    const signature = archivos
+      .map((f) => `${f.nombre}:${f.modificado}`)
+      .sort()
+      .join("|");
+    const state = await getSyncState();
+    if (state.lastFileSignature && signature !== state.lastFileSignature && archivos.length > 0) {
+      const updated = archivos
+        .filter((f) => f.modificado && f.modificado > new Date(Date.now() - 10 * 60 * 1000).toISOString())
+        .map((f) => f.nombre);
+      const detalle = updated.length > 0
+        ? `Actualizado: ${updated.slice(0, 3).join(", ")}${updated.length > 3 ? "..." : ""}`
+        : `Se detectaron cambios en ${archivos.length} archivo(s)`;
+      sendPushNotification(
+        "Datos actualizados",
+        `${detalle} | Total: ${transacciones.length} movimientos`,
+        "data-updated",
+        { tipo: "datos", balance: data.resumen.semanal.balance, url: "/" }
+      ).catch(() => {});
+    }
+    await setSyncState({ lastFileSignature: signature, lastTxCount: transacciones.length, lastNotifiedAt: new Date().toISOString() });
+
     const comparaciones = generarComparaciones(transacciones, data.resumen.semanal, data.resumen.mensual);
     for (const comp of comparaciones) {
       const tag = comp.tipo === "semanal" ? `week-${data.resumen.semanal.semana}` : `month-${data.resumen.mensual.mes}`;

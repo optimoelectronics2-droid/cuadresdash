@@ -7,7 +7,7 @@ export async function POST(request: Request) {
     if (!body.subscription?.endpoint) {
       return NextResponse.json({ error: "Falta subscription" }, { status: 400 });
     }
-    addSubscription(body.subscription);
+    await addSubscription(body.subscription);
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: "Error al suscribir" }, { status: 500 });

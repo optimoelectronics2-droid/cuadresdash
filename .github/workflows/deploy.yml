@@ -53,3 +53,9 @@ jobs:
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
         run: 'npx netlify-cli deploy --prod --dir=.next --message="Auto-deploy: ${{ github.sha }}"'
         continue-on-error: true
+
+      - name: Verificar API en produccion (salud + sync de Drive)
+        run: |
+          sleep 20
+          curl -fsS -o /dev/null -w "API /api/data: HTTP %{http_code}\n" https://cuadremen.netlify.app/api/data
+          curl -fsS -o /dev/null -w "Home /: HTTP %{http_code}\n" https://cuadremen.netlify.app/

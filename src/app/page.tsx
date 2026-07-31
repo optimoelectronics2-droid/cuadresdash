@@ -65,6 +65,21 @@ export default function HomePage() {
 
   const q = globalSearch.toLowerCase().trim();
 
+  const testNotification = async () => {
+    try {
+      const res = await fetch("/api/push/test", { method: "POST" });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        setPullMsg(json.error || "Sin suscripciones activas");
+      } else {
+        setPullMsg(`Notificación enviada a ${json.sent || 0} dispositivo(s)`);
+      }
+    } catch {
+      setPullMsg("Error al enviar la notificación");
+    }
+    setTimeout(() => setPullMsg(""), 3000);
+  };
+
   if (configError) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[70vh] text-center px-6">
@@ -199,6 +214,16 @@ export default function HomePage() {
             <div className={`w-2 h-2 rounded-full ${isLive ? "bg-green-500 live-dot" : "bg-gray-400"}`} />
             <span className="text-[10px] text-gray-500">{timeAgo || "..."}</span>
           </div>
+          <button
+            onClick={() => void testNotification()}
+            className="relative w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center active:scale-90 transition-transform shadow-sm"
+            title="Enviar notificación de prueba"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-primary">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+            </svg>
+          </button>
           <button
             onClick={() => void refresh(true)}
             disabled={isRefreshing}

@@ -14,3 +14,6 @@ server-log.txt
 tunnel-*.txt
 server-*.txt
 *.tsbuildinfo
+
+# Estado local (suscripciones push y sync) - no subir al repo
+data/

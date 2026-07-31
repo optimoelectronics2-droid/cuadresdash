@@ -1,4 +1,9 @@
 import webpush from "web-push";
+import {
+  addSubscription as storeAddSubscription,
+  loadSubscriptions,
+  removeSubscription as storeRemoveSubscription,
+} from "./push-store";
 
 const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || "BCryJ9GA9DXF6tmuWWIhJNEMv7rP93jCeFXYV5lCtjjI_EMLc6LMHYfEuUTlIWO1OMmD1LzeQsJOF17RsAAmnp0";
 const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || "vv4_GTbOCgqdAPu8eQV9JmMrRe7k6beHdzWKYxDVK_Y";
@@ -6,19 +11,16 @@ const VAPID_SUBJECT = "mailto:cuadre@pruebas-api-490718.iam.gserviceaccount.com"
 
 webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
-let subscriptions: PushSubscriptionJSON[] = [];
-
 export function getVapidPublicKey(): string {
   return VAPID_PUBLIC_KEY;
 }
 
-export function addSubscription(sub: PushSubscriptionJSON): void {
-  const exists = subscriptions.some((s) => s.endpoint === sub.endpoint);
-  if (!exists) subscriptions.push(sub);
+export async function addSubscription(sub: PushSubscriptionJSON): Promise<void> {
+  await storeAddSubscription(sub);
 }
 
-export function removeSubscription(endpoint: string): void {
-  subscriptions = subscriptions.filter((s) => s.endpoint !== endpoint);
+export async function removeSubscription(endpoint: string): Promise<void> {
+  await storeRemoveSubscription(endpoint);
 }
 
 export async function sendPushNotification(
@@ -29,6 +31,7 @@ export async function sendPushNotification(
 ): Promise<{ success: number; failed: number }> {
   let success = 0;
   let failed = 0;
+  const subscriptions = await loadSubscriptions();
   const payload = JSON.stringify({ title, body, tag: tag || "report", data: data || {}, url: "/" });
   for (const sub of subscriptions) {
     try {
@@ -36,7 +39,7 @@ export async function sendPushNotification(
       success++;
     } catch (err: any) {
       if (err.statusCode === 410 || err.statusCode === 404) {
-        removeSubscription(sub.endpoint!);
+        await storeRemoveSubscription(sub.endpoint!);
       }
       failed++;
     }
