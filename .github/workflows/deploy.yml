@@ -51,5 +51,5 @@ jobs:
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
-        run: npx netlify-cli deploy --prod --dir=.next --message="Auto-deploy: ${{ github.sha }}"
+        run: 'npx netlify-cli deploy --prod --dir=.next --message="Auto-deploy: ${{ github.sha }}"'
         continue-on-error: true
